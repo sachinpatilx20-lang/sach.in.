@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sach.in | Time Slot Manager</title>
+    <meta name="description" content="Manage your time slots, activities, and tasks with automatic duration calculations and Excel export.">
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2canvas for JPG Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <h1>Sach<span>.in</span></h1>
+            </div>
+            <p class="subtitle">Time Management authority</p>
+        </header>
+
+        <main>
+            <!-- Basic Details Section -->
+            <section class="card basic-details">
+                <div class="card-header">
+                    <i data-lucide="calendar"></i>
+                    <h2>Basic Details</h2>
+                </div>
+                <div class="input-group">
+                    <label for="schedule-date">Date</label>
+                    <input type="date" id="schedule-date" value="">
+                </div>
+            </section>
+
+            <!-- Task Input Section -->
+            <section class="card input-section">
+                <div class="card-header">
+                    <i data-lucide="plus-circle"></i>
+                    <h2>Add Time Slot</h2>
+                </div>
+                <form id="task-form">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="start-time">Start Time</label>
+                            <input type="time" id="start-time" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="end-time">End Time</label>
+                            <input type="time" id="end-time" required>
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="activity">Activity / Task Assigned</label>
+                            <input type="text" id="activity" placeholder="e.g. Meeting, Development, Lunch Break" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i data-lucide="plus"></i>
+                        Add Activity
+                    </button>
+                </form>
+            </section>
+
+            <!-- Task List Table Section -->
+            <section class="card table-section">
+                <div class="card-header space-between">
+                    <div class="title-with-icon">
+                        <i data-lucide="list-checks"></i>
+                        <h2>Daily Schedule</h2>
+                    </div>
+                    <button id="export-btn" class="btn-success">
+                        <i data-lucide="image"></i>
+                        Save as JPG
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="task-table">
+                        <thead>
+                            <tr>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Duration</th>
+                                <th>Activity</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-list">
+                            <!-- Tasks will be injected here -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row">
+                                <td colspan="2">Total Duration</td>
+                                <td id="total-duration">0h 0m</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div id="empty-state" class="empty-state">
+                        <i data-lucide="clock"></i>
+                        <p>No activities added yet. Track your time above!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="social-links">
+                <a href="https://www.instagram.com/sachinpatil12n/" target="_blank" rel="noopener noreferrer">
+                    <i data-lucide="instagram"></i> 
+                    Sach.in Instagram     
+                </a>
+            </div>
+            <p>&copy; 2026 Sach.in | Crafted with efficiency in mind.</p>
+        </footer>
+    </div>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
