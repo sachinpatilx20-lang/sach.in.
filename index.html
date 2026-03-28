@@ -4,93 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sach.in | Time Slot Manager</title>
-    <meta name="description" content="Manage your time slots, activities, and tasks with automatic duration calculations and JPG export.">
-    <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts: Inter -->
+    <meta name="description" content="Manage your time slots and tasks with automatic duration calculations and clean JPG export.">
+
+    <!-- Fonts: Sora (display) + DM Sans (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- html2canvas for JPG Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons (UMD) -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- FIX: Toast notification container (was missing — alert() used instead) -->
-    <div id="notification" class="notification" role="alert" aria-live="polite"></div>
+    <!-- Toast notification — replaces native alert() -->
+    <div id="notification" class="toast" role="alert" aria-live="polite" aria-atomic="true"></div>
 
-    <div class="app-container">
-        <header>
-            <div class="logo">
-                <h1>Sach<span>.in</span></h1>
+    <!-- Background decoration -->
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="bg-glow" aria-hidden="true"></div>
+
+    <div class="app-wrap">
+
+        <!-- ────────────── HEADER ────────────── -->
+        <header class="site-header">
+            <div class="brand">
+                <h1 class="logo">Sach<span>.in</span></h1>
+                <p class="brand-tag">
+                    <i data-lucide="zap" aria-hidden="true"></i>
+                    Time Management Authority
+                </p>
             </div>
-            <p class="subtitle">Time Management Authority</p>
+            <div class="header-date-pill" id="header-date-pill" aria-live="polite"></div>
         </header>
 
         <main>
-            <!-- Basic Details Section -->
-            <section class="card basic-details" aria-labelledby="basic-heading">
-                <div class="card-header">
-                    <i data-lucide="calendar" aria-hidden="true"></i>
-                    <h2 id="basic-heading">Basic Details</h2>
+
+            <!-- ────────────── DATE CARD ────────────── -->
+            <section class="card" aria-labelledby="lbl-date">
+                <div class="card-hd">
+                    <span class="card-ico"><i data-lucide="calendar-days" aria-hidden="true"></i></span>
+                    <h2 id="lbl-date">Session</h2>
                 </div>
-                <div class="input-group">
-                    <label for="schedule-date">Date</label>
-                    <input type="date" id="schedule-date">
+                <div class="two-col">
+                    <div class="field">
+                        <label for="schedule-date">Date</label>
+                        <input type="date" id="schedule-date" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label>Day of Week</label>
+                        <output id="day-display" class="day-display" for="schedule-date">—</output>
+                    </div>
                 </div>
             </section>
 
-            <!-- Task Input Section -->
-            <section class="card input-section" aria-labelledby="add-heading">
-                <div class="card-header">
-                    <i data-lucide="plus-circle" aria-hidden="true"></i>
-                    <h2 id="add-heading">Add Time Slot</h2>
+            <!-- ────────────── ADD SLOT CARD ────────────── -->
+            <section class="card" aria-labelledby="lbl-add">
+                <div class="card-hd">
+                    <span class="card-ico"><i data-lucide="plus-circle" aria-hidden="true"></i></span>
+                    <h2 id="lbl-add">Add Time Slot</h2>
                 </div>
-                <!-- FIX: novalidate lets JS handle validation with better UX -->
-                <form id="task-form" novalidate>
+                <form id="task-form" novalidate autocomplete="off">
                     <div class="form-grid">
-                        <div class="input-group">
-                            <label for="start-time">Start Time</label>
-                            <input type="time" id="start-time" required autocomplete="off">
+                        <div class="field">
+                            <label for="start-time">Start</label>
+                            <div class="input-ico-wrap">
+                                <i data-lucide="play-circle" aria-hidden="true"></i>
+                                <input type="time" id="start-time" required>
+                            </div>
                         </div>
-                        <div class="input-group">
-                            <label for="end-time">End Time</label>
-                            <input type="time" id="end-time" required autocomplete="off">
+                        <div class="field">
+                            <label for="end-time">End</label>
+                            <div class="input-ico-wrap">
+                                <i data-lucide="stop-circle" aria-hidden="true"></i>
+                                <input type="time" id="end-time" required>
+                            </div>
                         </div>
-                        <div class="input-group full-width">
-                            <label for="activity">Activity / Task Assigned</label>
-                            <input
-                                type="text"
-                                id="activity"
-                                placeholder="e.g. Meeting, Development, Lunch Break"
-                                required
-                                autocomplete="off"
-                                maxlength="200"
-                            >
+                        <div class="field span-2">
+                            <label for="activity">Activity / Task</label>
+                            <div class="input-ico-wrap">
+                                <i data-lucide="pencil-line" aria-hidden="true"></i>
+                                <input
+                                    type="text"
+                                    id="activity"
+                                    placeholder="e.g. Deep Work, Team Standup, Lunch…"
+                                    required
+                                    maxlength="120"
+                                >
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" class="btn-add">
                         <i data-lucide="plus" aria-hidden="true"></i>
-                        Add Activity
+                        <span>Add Activity</span>
                     </button>
                 </form>
             </section>
 
-            <!-- Task List Table Section -->
-            <section class="card table-section" aria-labelledby="schedule-heading">
-                <div class="card-header space-between">
-                    <div class="title-with-icon">
-                        <i data-lucide="list-checks" aria-hidden="true"></i>
-                        <h2 id="schedule-heading">Daily Schedule</h2>
+            <!-- ────────────── SCHEDULE CARD ────────────── -->
+            <section class="card schedule-card" aria-labelledby="lbl-schedule">
+                <div class="card-hd schedule-hd">
+                    <div class="hd-left">
+                        <span class="card-ico"><i data-lucide="layout-list" aria-hidden="true"></i></span>
+                        <h2 id="lbl-schedule">Daily Schedule</h2>
                     </div>
-                    <button id="export-btn" class="btn-success" disabled aria-label="Save schedule as JPG image">
-                        <i data-lucide="image" aria-hidden="true"></i>
-                        Save as JPG
+                    <button id="export-btn" class="btn-export" disabled aria-label="Export schedule as JPG">
+                        <i data-lucide="download" aria-hidden="true"></i>
+                        <span>Export JPG</span>
                     </button>
                 </div>
 
-                <div class="table-container">
+                <!-- Empty state -->
+                <div id="empty-state" class="empty-state" role="status">
+                    <div class="empty-ico"><i data-lucide="hourglass" aria-hidden="true"></i></div>
+                    <p class="empty-title">No activities yet</p>
+                    <p class="empty-sub">Add a time slot above to start tracking your day.</p>
+                </div>
+
+                <!-- Table wrapper (hidden when empty) -->
+                <div id="table-wrap" class="table-wrap" hidden>
                     <table id="task-table" aria-label="Daily schedule tasks">
                         <thead>
                             <tr>
@@ -98,39 +131,43 @@
                                 <th scope="col">End</th>
                                 <th scope="col">Duration</th>
                                 <th scope="col">Activity</th>
-                                <!-- FIX (a11y): scope="col" added to all headers -->
-                                <th scope="col" class="text-center">Action</th>
+                                <th scope="col" class="col-action"><span class="sr-only">Remove</span></th>
                             </tr>
                         </thead>
-                        <tbody id="task-list">
-                            <!-- Tasks injected by app.js -->
-                        </tbody>
+                        <tbody id="task-list"></tbody>
                         <tfoot>
                             <tr class="total-row">
-                                <td colspan="2"><strong>Total Duration</strong></td>
-                                <td id="total-duration">0h 0m</td>
+                                <td colspan="2" class="total-lbl">
+                                    <i data-lucide="sigma" aria-hidden="true"></i> Total
+                                </td>
+                                <td id="total-duration" class="total-val" aria-live="polite">0h 0m</td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
-
-                    <div id="empty-state" class="empty-state" role="status">
-                        <i data-lucide="clock" aria-hidden="true"></i>
-                        <p>No activities added yet. Track your time above!</p>
-                    </div>
                 </div>
+
+                <!-- Quick stats bar -->
+                <div id="stats-bar" class="stats-bar" hidden aria-live="polite"></div>
+
             </section>
         </main>
 
-        <footer>
-            <div class="social-links">
-                <a href="https://www.instagram.com/sachinpatil12n/" target="_blank" rel="noopener noreferrer" aria-label="Sach.in on Instagram">
-                    <i data-lucide="instagram" aria-hidden="true"></i>
-                    Sach.in Instagram
-                </a>
-            </div>
-            <p>&copy; 2026 Sach.in | Crafted with efficiency in mind.</p>
+        <!-- ────────────── FOOTER ────────────── -->
+        <footer class="site-footer">
+            <a
+                href="https://www.instagram.com/sachinpatil12n/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ig-link"
+                aria-label="Sach.in on Instagram"
+            >
+                <i data-lucide="instagram" aria-hidden="true"></i>
+                <span>@sachinpatil12n</span>
+            </a>
+            <p class="copy">&copy; 2026 Sach.in — Crafted with efficiency in mind.</p>
         </footer>
+
     </div>
 
     <script src="app.js"></script>
