@@ -1,135 +1,110 @@
-// Sach.in - Application Logic
+// Sach.in — Application Logic (Fixed)
 
+const STORAGE_KEY = 'sachin_time_tasks';
 let tasks = [];
 
-// Initialize
+// ─── Init ────────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Set default date to today
+    // Default date to today
     const dateInput = document.getElementById('schedule-date');
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.value = today;
+    dateInput.value = new Date().toISOString().split('T')[0];
 
-    // Initialize Lucide Icons
     lucide.createIcons();
-    
-    // Add Form Listener
-    const form = document.getElementById('task-form');
-    form.addEventListener('submit', handleAddTask);
 
-    // Add Export Listener
-    const exportBtn = document.getElementById('export-btn');
-    exportBtn.addEventListener('click', handleExportJPG);
+    document.getElementById('task-form').addEventListener('submit', handleAddTask);
+    document.getElementById('export-btn').addEventListener('click', handleExportJPG);
 
+    loadTasks();
     updateUI();
 });
 
-/**
- * Handle adding a new task from the form
- */
+// ─── Persistence ─────────────────────────────────────────────────────────────
+
+function saveTasks() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
+function loadTasks() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        tasks = stored ? JSON.parse(stored) : [];
+    } catch {
+        // Corrupted storage — start fresh
+        tasks = [];
+    }
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+let _notifTimer = null;
+
+function showNotification(message, type = 'error') {
+    const notif = document.getElementById('notification');
+    notif.textContent = message;
+    notif.className = `notification ${type} show`;
+    clearTimeout(_notifTimer);
+    _notifTimer = setTimeout(() => notif.classList.remove('show'), 3500);
+}
+
+// ─── Task Handlers ────────────────────────────────────────────────────────────
+
 function handleAddTask(event) {
     event.preventDefault();
 
     const startTime = document.getElementById('start-time').value;
-    const endTime = document.getElementById('end-time').value;
-    const activity = document.getElementById('activity').value;
+    const endTime   = document.getElementById('end-time').value;
+    const activity  = document.getElementById('activity').value.trim();
 
-    if (!startTime || !endTime || !activity) return;
+    if (!startTime || !endTime || !activity) {
+        showNotification('Please fill in all fields.');
+        return;
+    }
 
-    // Validate times (End should be after start)
-    if (endTime <= startTime) {
-        alert("End time must be after the start time.");
+    // BUG FIX: string comparison is valid for zero-padded "HH:MM" format,
+    // but now backed by numeric check for clarity and correctness.
+    const [sH, sM] = startTime.split(':').map(Number);
+    const [eH, eM] = endTime.split(':').map(Number);
+    if ((eH * 60 + eM) <= (sH * 60 + sM)) {
+        showNotification('End time must be after start time.');
         return;
     }
 
     const duration = calculateDuration(startTime, endTime);
-    
+
     const newTask = {
         id: Date.now(),
         start: startTime,
         end: endTime,
         duration: duration.text,
         minutes: duration.minutes,
-        activity: activity
+        activity
     };
 
     tasks.push(newTask);
-    event.target.reset(); 
-    updateUI();
+    saveTasks();
+    event.target.reset();
+    updateUI(newTask.id); // pass new ID so only that row gets the entry animation
 }
 
-/**
- * Calculate duration between two times
- */
+function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+    updateUI(); // no newTaskId → no animation on remaining rows
+}
+
+// ─── Calculations ─────────────────────────────────────────────────────────────
+
 function calculateDuration(start, end) {
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-
-    let diffMinutes = (endH * 60 + endM) - (startH * 60 + startM);
-    
-    const h = Math.floor(diffMinutes / 60);
-    const m = diffMinutes % 60;
-
+    const [sH, sM] = start.split(':').map(Number);
+    const [eH, eM] = end.split(':').map(Number);
+    const diffMinutes = (eH * 60 + eM) - (sH * 60 + sM);
     return {
-        text: `${h}h ${m}m`,
+        text: `${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`,
         minutes: diffMinutes
     };
 }
 
-/**
- * Update the Table and UI elements
- */
-function updateUI() {
-    const listElement = document.getElementById('task-list');
-    const emptyState = document.getElementById('empty-state');
-    const table = document.getElementById('task-table');
-    const totalDisplay = document.getElementById('total-duration');
-    const exportBtn = document.getElementById('export-btn');
-
-    // Clear list
-    listElement.innerHTML = '';
-
-    if (tasks.length === 0) {
-        emptyState.style.display = 'flex';
-        table.style.display = 'none';
-        exportBtn.disabled = true;
-        exportBtn.style.opacity = '0.5';
-    } else {
-        emptyState.style.display = 'none';
-        table.style.display = 'table';
-        exportBtn.disabled = false;
-        exportBtn.style.opacity = '1';
-
-        let totalMinutes = 0;
-
-        tasks.forEach(task => {
-            totalMinutes += task.minutes;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${format12h(task.start)}</td>
-                <td>${format12h(task.end)}</td>
-                <td style="font-weight: 600;">${task.duration}</td>
-                <td>${task.activity}</td>
-                <td class="text-center">
-                    <button class="btn-danger" onclick="deleteTask(${task.id})" title="Delete Activity">
-                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
-                    </button>
-                </td>
-            `;
-            listElement.appendChild(tr);
-        });
-
-        const totalH = Math.floor(totalMinutes / 60);
-        const totalM = totalMinutes % 60;
-        totalDisplay.innerText = `${totalH}h ${totalM}m`;
-    }
-
-    // Refresh icons for new elements
-    lucide.createIcons();
-}
-
-/**
- * Format 24h time to 12h for better readability
- */
 function format12h(time) {
     let [h, m] = time.split(':').map(Number);
     const ampm = h >= 12 ? 'PM' : 'AM';
@@ -137,39 +112,105 @@ function format12h(time) {
     return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
-/**
- * Remove a task from the list
- */
-window.deleteTask = function(id) {
-    tasks = tasks.filter(t => t.id !== id);
-    updateUI();
+// ─── UI Renderer ──────────────────────────────────────────────────────────────
+
+function updateUI(newTaskId = null) {
+    const listEl      = document.getElementById('task-list');
+    const emptyState  = document.getElementById('empty-state');
+    const table       = document.getElementById('task-table');
+    const totalDisplay = document.getElementById('total-duration');
+    const exportBtn   = document.getElementById('export-btn');
+
+    listEl.innerHTML = '';
+
+    const isEmpty = tasks.length === 0;
+
+    emptyState.style.display  = isEmpty ? 'flex' : 'none';
+    table.style.display       = isEmpty ? 'none' : 'table';
+    exportBtn.disabled        = isEmpty;
+    exportBtn.style.opacity   = isEmpty ? '0.5' : '1';
+    exportBtn.style.cursor    = isEmpty ? 'not-allowed' : 'pointer';
+
+    if (!isEmpty) {
+        let totalMinutes = 0;
+
+        tasks.forEach(task => {
+            totalMinutes += task.minutes;
+
+            const tr = document.createElement('tr');
+
+            // BUG FIX (animation): only the newly added row gets the slide-in class.
+            // Previously ALL rows animated on every updateUI call (e.g. on delete).
+            if (newTaskId && task.id === newTaskId) {
+                tr.classList.add('row-new');
+            }
+
+            // BUG FIX (XSS): use textContent, NOT innerHTML, for user-supplied data.
+            // Inserting activity via innerHTML allowed script-injection attacks.
+            const cells = [
+                { text: format12h(task.start) },
+                { text: format12h(task.end) },
+                { text: task.duration, bold: true },
+                { text: task.activity },
+            ];
+
+            cells.forEach(({ text, bold }) => {
+                const td = document.createElement('td');
+                td.textContent = text; // XSS-safe
+                if (bold) td.style.fontWeight = '600';
+                tr.appendChild(td);
+            });
+
+            // Action cell — built with DOM methods, no inline onclick
+            const actionTd = document.createElement('td');
+            actionTd.className = 'text-center action-cell';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-danger';
+            // BUG FIX (a11y): aria-label gives screen readers context for icon-only button
+            deleteBtn.setAttribute('aria-label', `Delete: ${task.activity}`);
+            deleteBtn.title = 'Delete Activity';
+            deleteBtn.innerHTML = '<i data-lucide="trash-2" style="width:18px;height:18px;"></i>';
+            // BUG FIX: use addEventListener instead of window.deleteTask / onclick coupling
+            deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+            actionTd.appendChild(deleteBtn);
+            tr.appendChild(actionTd);
+            listEl.appendChild(tr);
+        });
+
+        const totalH = Math.floor(totalMinutes / 60);
+        const totalM = totalMinutes % 60;
+        // BUG FIX: textContent is preferred over innerText (no reflow, consistent)
+        totalDisplay.textContent = `${totalH}h ${totalM}m`;
+    }
+
+    lucide.createIcons();
 }
 
-/**
- * Handle Excel Exporting
- */
-/**
- * Handle JPG Exporting - Robust Version
- */
+// ─── JPG Export ───────────────────────────────────────────────────────────────
+
 async function handleExportJPG() {
     if (tasks.length === 0) return;
 
     const exportBtn = document.getElementById('export-btn');
-    const originalContent = exportBtn.innerHTML;
-    
-    // Loading State
+    const originalHTML = exportBtn.innerHTML;
+
     exportBtn.disabled = true;
     exportBtn.innerHTML = '<i data-lucide="loader-2"></i> Capturing...';
     lucide.createIcons();
 
     const exportArea = document.querySelector('.table-section');
-    const dateVal = document.getElementById('schedule-date').value;
+    const dateVal    = document.getElementById('schedule-date').value;
 
-    // Hide actions column
-    const actionTh = exportArea.querySelector('th:last-child');
-    const actionTds = exportArea.querySelectorAll('td:last-child');
-    actionTh.style.display = 'none';
-    actionTds.forEach(td => td.style.display = 'none');
+    // BUG FIX (export): previous code used generic `td:last-child` which also
+    // matched tfoot cells. Now we hide only the specific action-column elements.
+    const actionHeader = exportArea.querySelector('thead th:last-child');
+    const actionCells  = [...exportArea.querySelectorAll('tbody td.action-cell')];
+    const actionFooter = exportArea.querySelector('tfoot td:last-child');
+    const toHide = [actionHeader, ...actionCells, actionFooter].filter(Boolean);
+
+    toHide.forEach(el => (el.style.display = 'none'));
 
     try {
         const canvas = await html2canvas(exportArea, {
@@ -177,37 +218,32 @@ async function handleExportJPG() {
             backgroundColor: '#ffffff',
             useCORS: true,
             logging: false,
-            // Ensure shadow and radius are captured cleanly
             onclone: (clonedDoc) => {
-                const clonedTable = clonedDoc.querySelector('.table-section');
-                clonedTable.style.padding = '40px'; // Add padding for a professional "image" look
-                clonedTable.style.boxShadow = 'none'; // Avoid shadow artifacts in some browsers
-                clonedTable.style.borderRadius = '0';
+                const cloned = clonedDoc.querySelector('.table-section');
+                if (cloned) {
+                    cloned.style.padding      = '40px';
+                    cloned.style.boxShadow    = 'none';
+                    cloned.style.borderRadius = '0';
+                }
             }
         });
 
         canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
+            const url  = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.download = `Sach_in_Schedule_${dateVal.replace(/-/g, '_') || 'daily'}.jpg`;
             link.href = url;
             link.click();
-            
-            // Cleanup
             setTimeout(() => URL.revokeObjectURL(url), 100);
-        }, 'image/jpeg', 0.9);
+        }, 'image/jpeg', 0.95);
 
     } catch (err) {
-        console.error("Export failed:", err);
-        alert("Could not save image. Please try again.");
+        console.error('Export failed:', err);
+        showNotification('Could not save image. Please try again.');
     } finally {
-        // Restore actions column
-        actionTh.style.display = '';
-        actionTds.forEach(td => td.style.display = '');
-
-        // Restore Button
+        toHide.forEach(el => (el.style.display = ''));
         exportBtn.disabled = false;
-        exportBtn.innerHTML = originalContent;
+        exportBtn.innerHTML = originalHTML;
         lucide.createIcons();
     }
 }

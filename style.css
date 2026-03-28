@@ -1,20 +1,20 @@
-/* Sach.in - Global CSS Design */
+/* Sach.in — Global CSS (Fixed) */
 
 :root {
-    --primary-blue: #007bff;
+    --primary-blue:       #007bff;
     --primary-blue-hover: #0056b3;
-    --light-blue: #eef6ff;
-    --dark-blue: #003d80;
-    --bg-white: #ffffff;
-    --text-dark: #333333;
-    --text-muted: #666666;
-    --border-color: #d1e3f8;
-    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-medium: 0 10px 15px -3px rgba(0, 0, 100, 0.1), 0 4px 6px -2px rgba(0, 0, 100, 0.05);
+    --light-blue:         #eef6ff;
+    --dark-blue:          #003d80;
+    --bg-white:           #ffffff;
+    --text-dark:          #333333;
+    --text-muted:         #666666;
+    --border-color:       #d1e3f8;
+    --shadow-soft:   0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-medium: 0 10px 15px -3px rgba(0,0,100,0.10), 0 4px 6px -2px rgba(0,0,100,0.05);
     --transition-fast: 0.2s ease;
 }
 
-* {
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -36,6 +36,8 @@ body {
     flex-direction: column;
     gap: 20px;
 }
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
 
 header {
     text-align: center;
@@ -59,7 +61,44 @@ header h1 span {
     font-weight: 400;
 }
 
-/* Card Styling */
+/* ── Notification Toast ──────────────────────────────────────────────────────── */
+
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-medium);
+    z-index: 1000;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.notification.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.notification.error {
+    background: #fff2f2;
+    color: #c0392b;
+    border: 1px solid #f5c6cb;
+}
+
+.notification.success {
+    background: #f0fff4;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────────── */
+
 .card {
     background: var(--bg-white);
     border-radius: 16px;
@@ -105,7 +144,8 @@ header h1 span {
     gap: 12px;
 }
 
-/* Inputs */
+/* ── Inputs ──────────────────────────────────────────────────────────────────── */
+
 .input-group {
     display: flex;
     flex-direction: column;
@@ -130,11 +170,19 @@ input[type="text"] {
     transition: all var(--transition-fast);
     outline: none;
     background-color: #fafcfe;
+    width: 100%;
 }
 
 input:focus {
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.12);
+}
+
+/* BUG FIX (a11y): show clear focus ring for keyboard navigation */
+input:focus-visible,
+button:focus-visible {
+    outline: 2px solid var(--primary-blue);
+    outline-offset: 2px;
 }
 
 .form-grid {
@@ -147,8 +195,13 @@ input:focus {
     grid-column: 1 / -1;
 }
 
-/* Buttons */
-.btn-primary, .btn-success {
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+
+/* BUG FIX (CSS): Previously both .btn-primary and .btn-success shared width:100%,
+   then .btn-success had a separate width:auto override — messy cascade.
+   Now each button sets its own width cleanly. */
+.btn-primary,
+.btn-success {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -160,12 +213,13 @@ input:focus {
     border: none;
     gap: 8px;
     font-family: inherit;
-    width: 100%;
+    font-size: 0.95rem;
 }
 
 .btn-primary {
     background-color: var(--primary-blue);
     color: white;
+    width: 100%; /* full-width submit button */
 }
 
 .btn-primary:hover {
@@ -176,12 +230,13 @@ input:focus {
 .btn-success {
     background-color: #28a745;
     color: white;
-    width: auto;
+    width: auto; /* compact export button */
     font-size: 0.9rem;
 }
 
-.btn-success:hover {
+.btn-success:hover:not(:disabled) {
     background-color: #218838;
+    transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -192,13 +247,17 @@ input:focus {
     padding: 4px;
     border-radius: 4px;
     transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-danger:hover {
     background: #fff5f5;
 }
 
-/* Table */
+/* ── Table ───────────────────────────────────────────────────────────────────── */
+
 .table-container {
     overflow-x: auto;
 }
@@ -242,7 +301,22 @@ td {
     font-size: 1.1rem;
 }
 
-/* Empty State */
+/* ── Row Animation ────────────────────────────────────────────────────────────
+   BUG FIX: Previously `tbody tr { animation: fadeInSlide }` caused ALL rows to
+   re-animate on every updateUI() call (e.g. when deleting an entry, remaining
+   rows would fly in again). Fix: only rows with class .row-new animate.       */
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+tbody tr.row-new {
+    animation: fadeInSlide 0.3s ease forwards;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────────────── */
+
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -263,23 +337,8 @@ td {
     font-size: 1rem;
 }
 
-/* Table Row Animation */
-@keyframes fadeInSlide {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
 
-tbody tr {
-    animation: fadeInSlide 0.3s ease forwards;
-}
-
-/* Footer */
 footer {
     text-align: center;
     padding: 30px 0;
@@ -319,27 +378,34 @@ footer {
     height: 18px;
 }
 
-/* Responsive */
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+
 @media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
     .form-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .card-header.space-between {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
     }
-    
+
     #export-btn {
         width: 100%;
     }
-    
-    body {
-        padding: 10px;
-    }
-    
-    .card {
-        padding: 16px;
+
+    .notification {
+        width: calc(100% - 40px);
+        white-space: normal;
+        text-align: center;
     }
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sach.in | Time Slot Manager</title>
-    <meta name="description" content="Manage your time slots, activities, and tasks with automatic duration calculations and Excel export.">
+    <meta name="description" content="Manage your time slots, activities, and tasks with automatic duration calculations and JPG export.">
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,92 +16,106 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
+
+    <!-- FIX: Toast notification container (was missing — alert() used instead) -->
+    <div id="notification" class="notification" role="alert" aria-live="polite"></div>
+
     <div class="app-container">
         <header>
             <div class="logo">
                 <h1>Sach<span>.in</span></h1>
             </div>
-            <p class="subtitle">Time Management authority</p>
+            <p class="subtitle">Time Management Authority</p>
         </header>
 
         <main>
             <!-- Basic Details Section -->
-            <section class="card basic-details">
+            <section class="card basic-details" aria-labelledby="basic-heading">
                 <div class="card-header">
-                    <i data-lucide="calendar"></i>
-                    <h2>Basic Details</h2>
+                    <i data-lucide="calendar" aria-hidden="true"></i>
+                    <h2 id="basic-heading">Basic Details</h2>
                 </div>
                 <div class="input-group">
                     <label for="schedule-date">Date</label>
-                    <input type="date" id="schedule-date" value="">
+                    <input type="date" id="schedule-date">
                 </div>
             </section>
 
             <!-- Task Input Section -->
-            <section class="card input-section">
+            <section class="card input-section" aria-labelledby="add-heading">
                 <div class="card-header">
-                    <i data-lucide="plus-circle"></i>
-                    <h2>Add Time Slot</h2>
+                    <i data-lucide="plus-circle" aria-hidden="true"></i>
+                    <h2 id="add-heading">Add Time Slot</h2>
                 </div>
-                <form id="task-form">
+                <!-- FIX: novalidate lets JS handle validation with better UX -->
+                <form id="task-form" novalidate>
                     <div class="form-grid">
                         <div class="input-group">
                             <label for="start-time">Start Time</label>
-                            <input type="time" id="start-time" required>
+                            <input type="time" id="start-time" required autocomplete="off">
                         </div>
                         <div class="input-group">
                             <label for="end-time">End Time</label>
-                            <input type="time" id="end-time" required>
+                            <input type="time" id="end-time" required autocomplete="off">
                         </div>
                         <div class="input-group full-width">
                             <label for="activity">Activity / Task Assigned</label>
-                            <input type="text" id="activity" placeholder="e.g. Meeting, Development, Lunch Break" required>
+                            <input
+                                type="text"
+                                id="activity"
+                                placeholder="e.g. Meeting, Development, Lunch Break"
+                                required
+                                autocomplete="off"
+                                maxlength="200"
+                            >
                         </div>
                     </div>
                     <button type="submit" class="btn-primary">
-                        <i data-lucide="plus"></i>
+                        <i data-lucide="plus" aria-hidden="true"></i>
                         Add Activity
                     </button>
                 </form>
             </section>
 
             <!-- Task List Table Section -->
-            <section class="card table-section">
+            <section class="card table-section" aria-labelledby="schedule-heading">
                 <div class="card-header space-between">
                     <div class="title-with-icon">
-                        <i data-lucide="list-checks"></i>
-                        <h2>Daily Schedule</h2>
+                        <i data-lucide="list-checks" aria-hidden="true"></i>
+                        <h2 id="schedule-heading">Daily Schedule</h2>
                     </div>
-                    <button id="export-btn" class="btn-success">
-                        <i data-lucide="image"></i>
+                    <button id="export-btn" class="btn-success" disabled aria-label="Save schedule as JPG image">
+                        <i data-lucide="image" aria-hidden="true"></i>
                         Save as JPG
                     </button>
                 </div>
-                
+
                 <div class="table-container">
-                    <table id="task-table">
+                    <table id="task-table" aria-label="Daily schedule tasks">
                         <thead>
                             <tr>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Duration</th>
-                                <th>Activity</th>
-                                <th class="text-center">Action</th>
+                                <th scope="col">Start</th>
+                                <th scope="col">End</th>
+                                <th scope="col">Duration</th>
+                                <th scope="col">Activity</th>
+                                <!-- FIX (a11y): scope="col" added to all headers -->
+                                <th scope="col" class="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody id="task-list">
-                            <!-- Tasks will be injected here -->
+                            <!-- Tasks injected by app.js -->
                         </tbody>
                         <tfoot>
                             <tr class="total-row">
-                                <td colspan="2">Total Duration</td>
+                                <td colspan="2"><strong>Total Duration</strong></td>
                                 <td id="total-duration">0h 0m</td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>
                     </table>
-                    <div id="empty-state" class="empty-state">
-                        <i data-lucide="clock"></i>
+
+                    <div id="empty-state" class="empty-state" role="status">
+                        <i data-lucide="clock" aria-hidden="true"></i>
                         <p>No activities added yet. Track your time above!</p>
                     </div>
                 </div>
@@ -110,16 +124,15 @@
 
         <footer>
             <div class="social-links">
-                <a href="https://www.instagram.com/sachinpatil12n/" target="_blank" rel="noopener noreferrer">
-                    <i data-lucide="instagram"></i> 
-                    Sach.in Instagram     
+                <a href="https://www.instagram.com/sachinpatil12n/" target="_blank" rel="noopener noreferrer" aria-label="Sach.in on Instagram">
+                    <i data-lucide="instagram" aria-hidden="true"></i>
+                    Sach.in Instagram
                 </a>
             </div>
             <p>&copy; 2026 Sach.in | Crafted with efficiency in mind.</p>
         </footer>
     </div>
 
-    <!-- App Logic -->
     <script src="app.js"></script>
 </body>
 </html>
